@@ -12,6 +12,9 @@ import { Context, Contract, Info, Returns, Transaction } from 'fabric-contract-a
 const REGULATOR_MSP = 'Org2MSP';
 const LENDER_MSP = 'Org1MSP';
 
+// Whitepaper mechanism 3 / §15: flag-removal penalty is 0.02% of the flagged invoice's value.
+const FLAG_PENALTY_RATE = 0.0002;
+
 type ReceivableStatus = 'PENDING' | 'ACTIVE' | 'FLAGGED' | 'DISPUTED' | 'SETTLED';
 type ClaimType = 'PLEDGE' | 'ASSIGNMENT';
 type ClaimStatus = 'ACTIVE' | 'REJECTED' | 'SETTLED' | 'RELEASED';
@@ -56,6 +59,28 @@ interface LinkedEntity {
     createdAt: string;
 }
 
+type FlagStatus = 'PENDING_REVIEW' | 'CLEARED';
+
+/**
+ * A specific flagged event on one receivable -- distinct from `LinkedEntity`, which just
+ * records the underlying graph fact ("these two business IDs are linked"). Clearing requires
+ * BOTH the penalty fee acknowledgment AND a reviewer-verified supporting document hash, per the
+ * whitepaper's mechanism 3 update -- payment alone must never be sufficient.
+ */
+interface ReceivableFlag {
+    docType: 'receivableFlag';
+    id: string;
+    receivableId: string;
+    linkedEntityId: string;
+    reason: string;
+    invoiceValue: number;
+    penaltyFeeBdt: number;
+    status: FlagStatus;
+    raisedAt: string;
+    clearedAt?: string;
+    clearedDocumentHash?: string;
+}
+
 interface MerkleAnchor {
     docType: 'merkleAnchor';
     rootHash: string;
@@ -90,6 +115,18 @@ export class FinClaimContract extends Contract {
 
     private claimKey(ctx: Context, receivableId: string, lenderId: string): string {
         return ctx.stub.createCompositeKey('claim', [receivableId, lenderId]);
+    }
+
+    private flagKey(ctx: Context, receivableId: string, flagId: string): string {
+        return ctx.stub.createCompositeKey('receivableFlag', [receivableId, flagId]);
+    }
+
+    private async getReceivableFlag(ctx: Context, receivableId: string, flagId: string): Promise<ReceivableFlag> {
+        const bytes = await ctx.stub.getState(this.flagKey(ctx, receivableId, flagId));
+        if (!bytes || bytes.length === 0) {
+            throw new Error(`Flag ${flagId} does not exist on receivable ${receivableId}`);
+        }
+        return JSON.parse(bytes.toString()) as ReceivableFlag;
     }
 
     // ---------------------------------------------------------------------
@@ -340,6 +377,118 @@ export class FinClaimContract extends Contract {
         const key = ctx.stub.createCompositeKey('linkedEntity', [businessIdA, businessIdB]);
         await ctx.stub.putState(key, Buffer.from(JSON.stringify(link)));
         ctx.stub.setEvent('LinkedEntityFlagged', Buffer.from(JSON.stringify({ businessIdA, businessIdB, reason })));
+    }
+
+    /**
+     * Raises a reviewable flag on a specific receivable (e.g. a shared-director match found by
+     * off-chain graph analysis in the Identity & Oracle gateway layer). The penalty fee is
+     * computed on-chain from the receivable's own faceValue, not supplied by the caller, so it
+     * can't be understated. Moves the receivable to FLAGGED, blocking further claims against it
+     * until a regulator clears the flag.
+     */
+    @Transaction()
+    async RaiseReceivableFlag(
+        ctx: Context,
+        receivableId: string,
+        flagId: string,
+        linkedEntityId: string,
+        reason: string,
+    ): Promise<void> {
+        this.requireRegulator(ctx);
+
+        const existing = await ctx.stub.getState(this.flagKey(ctx, receivableId, flagId));
+        if (existing && existing.length > 0) {
+            throw new Error(`Flag ${flagId} already exists on receivable ${receivableId}`);
+        }
+
+        const receivable = await this.getReceivable(ctx, receivableId);
+        if (receivable.status !== 'ACTIVE') {
+            throw new Error(`Receivable ${receivableId} is not ACTIVE (current status: ${receivable.status})`);
+        }
+
+        const flag: ReceivableFlag = {
+            docType: 'receivableFlag',
+            id: flagId,
+            receivableId,
+            linkedEntityId,
+            reason,
+            invoiceValue: receivable.faceValue,
+            penaltyFeeBdt: Math.round(receivable.faceValue * FLAG_PENALTY_RATE),
+            status: 'PENDING_REVIEW',
+            raisedAt: ctx.stub.getTxTimestamp().seconds.low.toString(),
+        };
+        await ctx.stub.putState(this.flagKey(ctx, receivableId, flagId), Buffer.from(JSON.stringify(flag)));
+
+        receivable.status = 'FLAGGED';
+        receivable.flagReason = reason;
+        await ctx.stub.putState(receivableId, Buffer.from(JSON.stringify(receivable)));
+
+        ctx.stub.setEvent('ReceivableFlagged', Buffer.from(JSON.stringify({ receivableId, flagId })));
+    }
+
+    /**
+     * Clears a flag. Requires BOTH the penalty fee acknowledgment AND a reviewer-verified
+     * supporting document hash -- payment alone is explicitly insufficient per the whitepaper's
+     * mechanism 3 update. Restores the receivable to ACTIVE.
+     */
+    @Transaction()
+    async ClearReceivableFlag(
+        ctx: Context,
+        receivableId: string,
+        flagId: string,
+        feeAcknowledgedStr: string,
+        supportingDocumentHash: string,
+    ): Promise<void> {
+        this.requireRegulator(ctx);
+
+        const flag = await this.getReceivableFlag(ctx, receivableId, flagId);
+        if (flag.status !== 'PENDING_REVIEW') {
+            throw new Error(`Flag ${flagId} is not PENDING_REVIEW (current status: ${flag.status})`);
+        }
+        if (feeAcknowledgedStr !== 'true') {
+            throw new Error('The penalty fee must be acknowledged before a flag can be cleared');
+        }
+        if (!supportingDocumentHash) {
+            throw new Error('A reviewer-verified supporting document hash is required to clear a flag');
+        }
+
+        flag.status = 'CLEARED';
+        flag.clearedAt = ctx.stub.getTxTimestamp().seconds.low.toString();
+        flag.clearedDocumentHash = supportingDocumentHash;
+        await ctx.stub.putState(this.flagKey(ctx, receivableId, flagId), Buffer.from(JSON.stringify(flag)));
+
+        const receivable = await this.getReceivable(ctx, receivableId);
+        if (receivable.status === 'FLAGGED') {
+            receivable.status = 'ACTIVE';
+            receivable.flagReason = undefined;
+            await ctx.stub.putState(receivableId, Buffer.from(JSON.stringify(receivable)));
+        }
+
+        ctx.stub.setEvent('ReceivableFlagCleared', Buffer.from(JSON.stringify({ receivableId, flagId })));
+    }
+
+    @Transaction(false)
+    @Returns('string')
+    async GetFlag(ctx: Context, receivableId: string, flagId: string): Promise<string> {
+        this.requireRegulator(ctx);
+        return JSON.stringify(await this.getReceivableFlag(ctx, receivableId, flagId));
+    }
+
+    @Transaction(false)
+    @Returns('string')
+    async GetFlagsForReceivable(ctx: Context, receivableId: string): Promise<string> {
+        this.requireRegulator(ctx);
+        const iterator = await ctx.stub.getStateByPartialCompositeKey('receivableFlag', [receivableId]);
+        const flags: ReceivableFlag[] = [];
+        let result = await iterator.next();
+        while (!result.done) {
+            if (result.value && result.value.value) {
+                flags.push(JSON.parse(result.value.value.toString()) as ReceivableFlag);
+            }
+            result = await iterator.next();
+        }
+        await iterator.close();
+        return JSON.stringify(flags);
     }
 
     @Transaction()
