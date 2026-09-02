@@ -16,7 +16,7 @@ export default function BuyerDashboardPage() {
 
   const handleConfirm = (receivableId: string) => {
     attestReceivable(receivableId);
-    toast.success(`${receivableId} confirmed — obligation now active.`);
+    toast.success(`${receivableId} confirmed - obligation now active.`);
   };
 
   return (

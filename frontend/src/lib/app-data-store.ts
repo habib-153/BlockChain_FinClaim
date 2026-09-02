@@ -79,7 +79,7 @@ export function subscribe(listener: Listener): () => void {
   return () => listeners.delete(listener);
 }
 
-/** Reads localStorage once and caches — safe to call on every render. */
+/** Reads localStorage once and caches - safe to call on every render. */
 export function getSnapshot(): AppDataState {
   if (cached === undefined) cached = readFromStorage();
   return cached;
@@ -87,8 +87,8 @@ export function getSnapshot(): AppDataState {
 
 /**
  * Matches the server-rendered (fixture defaults) markup so hydration never
- * mismatches. Must return a stable reference — React re-renders in a loop
- * otherwise — so this is computed once, not on every call.
+ * mismatches. Must return a stable reference - React re-renders in a loop
+ * otherwise - so this is computed once, not on every call.
  */
 const SERVER_SNAPSHOT: AppDataState = fixtureDefaults();
 
@@ -186,7 +186,7 @@ export function submitClaim(input: SubmitClaimInput): Claim {
     `${input.type} claim ${created.id} for ${input.amountBdt.toLocaleString(
       "en-US"
     )} BDT against ${input.receivableId} ${
-      outcome.status === "APPROVED" ? "approved" : "rejected — exceeds available capacity"
+      outcome.status === "APPROVED" ? "approved" : "rejected - exceeds available capacity"
     }.`
   );
 
@@ -205,9 +205,9 @@ export function clearFlag(flagId: string, documentName: string): void {
 
   const event = appendAuditEvent(
     state,
-    "Bangladesh Bank — Financial Institutions Supervision Wing",
+    "Bangladesh Bank - Financial Institutions Supervision Wing",
     "Linked-entity flag cleared",
-    `${flagId} (${target.claimantName}) cleared — penalty fee ${target.penaltyFeeBdt.toLocaleString(
+    `${flagId} (${target.claimantName}) cleared - penalty fee ${target.penaltyFeeBdt.toLocaleString(
       "en-US"
     )} BDT acknowledged, supporting document ${documentName} on file.`
   );
@@ -235,7 +235,7 @@ export function setClaimFrozen(claimId: string, frozen: boolean): void {
 
   const event = appendAuditEvent(
     state,
-    "Bangladesh Bank — Financial Institutions Supervision Wing",
+    "Bangladesh Bank - Financial Institutions Supervision Wing",
     frozen ? "Claim frozen" : "Claim unfrozen",
     `${claimId} against ${target.receivableId} ${frozen ? "frozen" : "unfrozen"} by the regulator.`
   );

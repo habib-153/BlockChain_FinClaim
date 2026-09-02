@@ -7,7 +7,7 @@ export interface CapacitySummary {
   allocatedPct: number;
 }
 
-/** Sums only APPROVED, non-frozen claims — the same rule fixture data already encodes. */
+/** Sums only APPROVED, non-frozen claims - the same rule fixture data already encodes. */
 export function summarizeCapacity(
   receivable: Receivable,
   claims: Claim[]
@@ -30,7 +30,7 @@ export function summarizeCapacity(
   return { totalBdt: receivable.amountBdt, allocatedBdt, remainingBdt, allocatedPct };
 }
 
-/** A new claim auto-approves iff it fits within remaining capacity — first-come, first-served. */
+/** A new claim auto-approves iff it fits within remaining capacity - first-come, first-served. */
 export function evaluateClaim(
   receivable: Receivable,
   existingClaims: Claim[],
@@ -42,6 +42,6 @@ export function evaluateClaim(
   }
   return {
     status: "REJECTED",
-    rejectionReason: "Not eligible — exceeds available capacity.",
+    rejectionReason: "Not eligible - exceeds available capacity.",
   };
 }

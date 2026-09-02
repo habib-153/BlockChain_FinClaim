@@ -12,7 +12,7 @@ export default function FlagsReviewPage() {
         <h1 className="text-lg font-semibold tracking-tight">Linked-entity review queue</h1>
         <p className="text-sm text-muted-foreground">
           Claims flagged for shared directorship or other linked-entity risk.
-          Nothing here is auto-blocked — each flag needs an explicit review.
+          Nothing here is auto-blocked - each flag needs an explicit review.
         </p>
       </div>
 

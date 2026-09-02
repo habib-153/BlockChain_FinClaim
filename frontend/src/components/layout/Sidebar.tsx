@@ -47,20 +47,11 @@ export function Sidebar({ role, onNavigate }: { role: Role; onNavigate?: () => v
 
   return (
     <div className="flex h-full w-64 flex-col bg-sidebar text-sidebar-foreground">
-      <div className="flex items-center gap-2.5 px-5 py-6">
-        <Image
-          src="/brand/finclaim-logo.png"
-          alt="FinClaim"
-          width={32}
-          height={32}
-          className="size-8 shrink-0"
-        />
-        <div className="leading-tight">
-          <div className="text-base font-semibold tracking-tight">FinClaim</div>
-          <div className="text-[10px] font-medium tracking-widest text-sidebar-foreground/50">
-            TRUST · VERIFY · TRANSACT
-          </div>
-        </div>
+      <div className="flex flex-col px-5 py-3">
+        <Image src="/brand/logo_v2.png" alt="FinClaim" width={200} height={60} />
+        {/* <div className="text-[10px] font-medium tracking-widest text-sidebar-foreground/50">
+          TRUST · VERIFY · TRANSACT
+        </div> */}
       </div>
 
       <nav className="flex-1 space-y-1 px-3">

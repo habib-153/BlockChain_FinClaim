@@ -51,7 +51,7 @@ export function SubmitReceivableForm() {
         invoiceFileName: invoiceFile?.name,
       });
       setIsSubmitting(false);
-      toast.success(`${receivable.id} submitted — awaiting buyer attestation.`);
+      toast.success(`${receivable.id} submitted - awaiting buyer attestation.`);
       router.push("/seller");
     }, 700);
   };

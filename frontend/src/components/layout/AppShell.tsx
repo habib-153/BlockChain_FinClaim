@@ -2,8 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { LogOut, Menu, RotateCcw } from "lucide-react";
-import { toast } from "sonner";
+import { LogOut, Menu } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +15,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { ROLE_LABELS, Sidebar } from "@/components/layout/Sidebar";
-import { useAppData } from "@/hooks/useAppData";
 import { useSession } from "@/hooks/useSession";
 import type { UserIdentity } from "@/lib/types";
 
@@ -39,7 +37,6 @@ export function AppShell({
 }) {
   const router = useRouter();
   const { logout } = useSession();
-  const { resetToFixtures } = useAppData();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = () => {
@@ -47,13 +44,8 @@ export function AppShell({
     router.push("/login");
   };
 
-  const handleReset = () => {
-    resetToFixtures();
-    toast.success("Demo data reset to its starting state.");
-  };
-
   return (
-    <div className="flex min-h-screen bg-muted/30">
+    <div className="flex min-h-screen bg-white">
       <aside className="hidden shrink-0 border-r border-sidebar-border lg:block">
         <Sidebar role={user.role} />
       </aside>
@@ -103,10 +95,6 @@ export function AppShell({
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleReset}>
-                  <RotateCcw />
-                  Reset demo data
-                </DropdownMenuItem>
                 <DropdownMenuItem variant="destructive" onClick={handleLogout}>
                   <LogOut />
                   Sign out

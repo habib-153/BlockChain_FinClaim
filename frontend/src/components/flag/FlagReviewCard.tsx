@@ -28,7 +28,7 @@ export function FlagReviewCard({ flag }: { flag: LinkedEntityFlag }) {
           <Link2 className="mt-0.5 size-4 shrink-0" />
           <span>
             Shares director <span className="font-medium text-foreground">{flag.sharedDirector}</span>{" "}
-            with <span className="font-medium text-foreground">{flag.linkedEntityName}</span> — an
+            with <span className="font-medium text-foreground">{flag.linkedEntityName}</span> - an
             entity with a prior disputed claim.
           </span>
         </div>

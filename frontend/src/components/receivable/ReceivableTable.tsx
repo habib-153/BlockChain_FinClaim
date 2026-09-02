@@ -50,7 +50,7 @@ export function ReceivableTable({
                 {formatDate(r.submittedAt)}
               </TableCell>
               <TableCell className="text-muted-foreground">
-                {r.attestedAt ? formatDate(r.attestedAt) : "—"}
+                {r.attestedAt ? formatDate(r.attestedAt) : "-"}
               </TableCell>
               <TableCell>
                 <ReceivableStatusBadge status={r.status} />

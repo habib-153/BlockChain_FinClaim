@@ -42,7 +42,7 @@ export function ClearFlagDialog({ flag }: { flag: LinkedEntityFlag }) {
       setIsSubmitting(false);
       setOpen(false);
       reset();
-      toast.success(`${flag.id} cleared — ${flag.claimantName} unblocked.`);
+      toast.success(`${flag.id} cleared - ${flag.claimantName} unblocked.`);
     }, 600);
   };
 
@@ -65,7 +65,7 @@ export function ClearFlagDialog({ flag }: { flag: LinkedEntityFlag }) {
           <DialogTitle>Clear linked-entity flag {flag.id}</DialogTitle>
           <DialogDescription>
             Clearing requires both the penalty fee acknowledgment and a supporting
-            document. Both are needed — the action stays disabled until then.
+            document. Both are needed - the action stays disabled until then.
           </DialogDescription>
         </DialogHeader>
 

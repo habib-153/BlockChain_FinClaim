@@ -57,9 +57,9 @@ export function SubmitClaimForm({ lenderName }: { lenderName: string }) {
       });
       setIsSubmitting(false);
       if (claim.status === "APPROVED") {
-        toast.success(`${claim.id} approved — ${formatBDT(claim.amountBdt)} allocated.`);
+        toast.success(`${claim.id} approved - ${formatBDT(claim.amountBdt)} allocated.`);
       } else {
-        toast.error(`${claim.id} rejected — ${claim.rejectionReason}`);
+        toast.error(`${claim.id} rejected - ${claim.rejectionReason}`);
       }
       router.push("/lender");
     }, 700);
@@ -88,7 +88,7 @@ export function SubmitClaimForm({ lenderName }: { lenderName: string }) {
               <SelectContent>
                 {activeReceivables.map((r) => (
                   <SelectItem key={r.id} value={r.id}>
-                    {r.id} — {formatBDT(r.amountBdt)}
+                    {r.id} - {formatBDT(r.amountBdt)}
                   </SelectItem>
                 ))}
               </SelectContent>

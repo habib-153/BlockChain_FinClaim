@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { LandingPage } from "@/components/marketing/LandingPage";
 import { useSession } from "@/hooks/useSession";
 
 export default function RootPage() {
@@ -10,13 +11,24 @@ export default function RootPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (user === undefined) return;
-    router.replace(user ? `/${user.role}` : "/login");
+    if (user) router.replace(`/${user.role}`);
   }, [user, router]);
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30">
-      <Loader2 className="size-6 animate-spin text-finclaim-teal-700" />
-    </div>
-  );
+  if (user === undefined) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white">
+        <Loader2 className="size-6 animate-spin text-finclaim-teal-700" />
+      </div>
+    );
+  }
+
+  if (user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white">
+        <Loader2 className="size-6 animate-spin text-finclaim-teal-700" />
+      </div>
+    );
+  }
+
+  return <LandingPage />;
 }

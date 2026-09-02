@@ -3,7 +3,7 @@ import type { Claim } from "@/lib/types";
 /**
  * Flagship scenario for RCV-2026-04871 (BDT 1,000,000):
  * Padma (400,000, approved) + Jamuna (300,000, approved) = 700,000 allocated,
- * leaving 300,000 remaining capacity — which is why Meghna's 500,000 pledge
+ * leaving 300,000 remaining capacity - which is why Meghna's 500,000 pledge
  * is rejected. See docs/handoff/phase-1-frontend.md §3.
  */
 export const CLAIMS: Claim[] = [
@@ -34,7 +34,7 @@ export const CLAIMS: Claim[] = [
     type: "Pledge",
     amountBdt: 500_000,
     status: "REJECTED",
-    rejectionReason: "Not eligible — exceeds available capacity.",
+    rejectionReason: "Not eligible - exceeds available capacity.",
     submittedAt: "2026-08-21T09:50:00Z",
     frozen: false,
   },

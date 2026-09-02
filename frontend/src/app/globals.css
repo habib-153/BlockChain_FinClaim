@@ -57,7 +57,7 @@
 }
 
 :root {
-  /* FinClaim brand palette — pixel-sampled from the whitepaper logo/diagrams.
+  /* FinClaim brand palette - pixel-sampled from the whitepaper logo/diagrams.
      See docs/handoff/phase-1-frontend.md §2. Do not hardcode these hexes
      elsewhere; reference the finclaim-* theme tokens instead. */
   --finclaim-navy-950: #05122a;
@@ -92,14 +92,14 @@
   --chart-4: var(--finclaim-brick-500);
   --chart-5: var(--finclaim-navy-900);
   --radius: 0.625rem;
-  --sidebar: var(--finclaim-navy-900);
-  --sidebar-foreground: oklch(0.95 0.01 220);
-  --sidebar-primary: var(--finclaim-emerald-500);
-  --sidebar-primary-foreground: var(--finclaim-navy-950);
-  --sidebar-accent: var(--finclaim-navy-950);
-  --sidebar-accent-foreground: oklch(0.98 0.005 220);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: var(--finclaim-emerald-500);
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: var(--finclaim-navy-900);
+  --sidebar-primary: var(--finclaim-teal-700);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--finclaim-teal-700);
 }
 
 .dark {

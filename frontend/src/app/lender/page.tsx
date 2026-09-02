@@ -20,10 +20,10 @@ export default function LenderDashboardPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-lg font-semibold tracking-tight">
-            {user?.institution} — capacity view
+            {user?.institution} - capacity view
           </h1>
           <p className="text-sm text-muted-foreground">
-            Remaining financing room per receivable, and your own claim history —
+            Remaining financing room per receivable, and your own claim history -
             other lenders&apos; positions are never shown here.
           </p>
         </div>

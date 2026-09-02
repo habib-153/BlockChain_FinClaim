@@ -19,7 +19,7 @@ export const AUDIT_EVENTS: AuditEvent[] = [
   {
     id: "EVT-00041",
     timestamp: "2026-09-02T08:15:00Z",
-    actor: "Bangladesh Bank — Financial Institutions Supervision Wing",
+    actor: "Bangladesh Bank - Financial Institutions Supervision Wing",
     action: "Linked-entity flag raised",
     detail:
       "Turag Apparel Solutions Ltd. flagged for shared directorship with Shitalakshya Fabrics Ltd. (FLAG-2026-0007).",
@@ -30,7 +30,7 @@ export const AUDIT_EVENTS: AuditEvent[] = [
     actor: "Meghna NBFI Ltd.",
     action: "Claim rejected",
     detail:
-      "Pledge claim CLM-2026-00933 for BDT 500,000 against RCV-2026-04871 rejected — exceeds available capacity.",
+      "Pledge claim CLM-2026-00933 for BDT 500,000 against RCV-2026-04871 rejected - exceeds available capacity.",
   },
   {
     id: "EVT-00030",

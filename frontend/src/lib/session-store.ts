@@ -24,14 +24,14 @@ export function subscribe(listener: Listener): () => void {
   return () => listeners.delete(listener);
 }
 
-/** Reads localStorage once and caches — safe to call on every render. */
+/** Reads localStorage once and caches - safe to call on every render. */
 export function getSnapshot(): UserIdentity | null {
   if (cached === undefined) cached = readFromStorage();
   return cached;
 }
 
 /**
- * `undefined` means "not yet determined" — distinct from `null` ("definitely
+ * `undefined` means "not yet determined" - distinct from `null` ("definitely
  * logged out"). The server can't read localStorage, so it doesn't know which
  * one is true; consumers must treat `undefined` as "still resolving, don't
  * redirect yet" rather than assuming logged-out.

@@ -2,7 +2,11 @@ import type { UserIdentity } from "@/lib/types";
 
 /**
  * Login directory (email -> identity). Match on email only, case-insensitive;
- * any non-empty password is accepted. Never render this list in the UI.
+ * any non-empty password is accepted. The login page's "Quick access" panel
+ * renders role/institution/name from this list for faster access during
+ * presentations - email addresses themselves are still never printed in the
+ * UI, and an unmatched typed-in email still falls back to a generic
+ * "invalid credentials" error rather than hinting at valid ones.
  */
 export const USERS: UserIdentity[] = [
   {
