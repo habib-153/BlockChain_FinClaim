@@ -10,3 +10,11 @@ build/
 **/organizations/
 **/channel-artifacts/
 **/*.tar.gz
+CLAUDE.md
+docs
+PROJECT_STATUS.md
+
+
+
+
+
