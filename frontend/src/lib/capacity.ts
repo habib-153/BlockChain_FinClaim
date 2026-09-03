@@ -30,18 +30,23 @@ export function summarizeCapacity(
   return { totalBdt: receivable.amountBdt, allocatedBdt, remainingBdt, allocatedPct };
 }
 
-/** A new claim auto-approves iff it fits within remaining capacity - first-come, first-served. */
+/**
+ * A new financing request is only ever auto-*rejected* - when it can't
+ * possibly fit within remaining capacity. It never auto-approves: anything
+ * that fits stays PENDING for the target bank to manually approve or reject
+ * (see decideClaim in app-data-store.ts).
+ */
 export function evaluateClaim(
   receivable: Receivable,
   existingClaims: Claim[],
   requestedAmountBdt: number
-): { status: "APPROVED" | "REJECTED"; rejectionReason?: string } {
+): { status: "PENDING" | "REJECTED"; rejectionReason?: string } {
   const { remainingBdt } = summarizeCapacity(receivable, existingClaims);
-  if (requestedAmountBdt <= remainingBdt) {
-    return { status: "APPROVED" };
+  if (requestedAmountBdt > remainingBdt) {
+    return {
+      status: "REJECTED",
+      rejectionReason: "Not eligible - exceeds available capacity.",
+    };
   }
-  return {
-    status: "REJECTED",
-    rejectionReason: "Not eligible - exceeds available capacity.",
-  };
+  return { status: "PENDING" };
 }

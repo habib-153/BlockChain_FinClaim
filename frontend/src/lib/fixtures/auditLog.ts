@@ -19,7 +19,7 @@ export const AUDIT_EVENTS: AuditEvent[] = [
   {
     id: "EVT-00041",
     timestamp: "2026-09-02T08:15:00Z",
-    actor: "Bangladesh Bank - Financial Institutions Supervision Wing",
+    actor: "FinClaim",
     action: "Linked-entity flag raised",
     detail:
       "Turag Apparel Solutions Ltd. flagged for shared directorship with Shitalakshya Fabrics Ltd. (FLAG-2026-0007).",
@@ -61,5 +61,21 @@ export const AUDIT_EVENTS: AuditEvent[] = [
     actor: "Karnaphuli Garments Ltd.",
     action: "Receivable submitted",
     detail: "RCV-2026-04871 (BDT 1,000,000) submitted for buyer attestation.",
+  },
+  {
+    id: "EVT-00008",
+    timestamp: "2026-07-21T11:05:00Z",
+    actor: "FinClaim",
+    action: "Linked-entity flag cleared",
+    detail:
+      "FLAG-2026-0003 (Shitalakshya Fabrics Ltd.) cleared - flag clearance fee BDT 190 paid, supporting document shitalakshya-compliance-cert.pdf on file.",
+  },
+  {
+    id: "EVT-00005",
+    timestamp: "2026-07-14T09:30:00Z",
+    actor: "FinClaim",
+    action: "Linked-entity flag raised",
+    detail:
+      "Shitalakshya Fabrics Ltd. flagged for shared directorship with Turag Apparel Solutions Ltd. (FLAG-2026-0003).",
   },
 ];

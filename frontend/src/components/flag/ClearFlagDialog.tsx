@@ -17,11 +17,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAppData } from "@/hooks/useAppData";
+import { useSession } from "@/hooks/useSession";
 import { formatBDT } from "@/lib/utils";
 import type { LinkedEntityFlag } from "@/lib/types";
 
 export function ClearFlagDialog({ flag }: { flag: LinkedEntityFlag }) {
   const { clearFlag } = useAppData();
+  const { user } = useSession();
   const [open, setOpen] = useState(false);
   const [ackFee, setAckFee] = useState(false);
   const [document, setDocument] = useState<File | null>(null);
@@ -38,7 +40,7 @@ export function ClearFlagDialog({ flag }: { flag: LinkedEntityFlag }) {
     if (!canClear || !document) return;
     setIsSubmitting(true);
     window.setTimeout(() => {
-      clearFlag(flag.id, document.name);
+      clearFlag(flag.id, document.name, user?.institution ?? "FinClaim");
       setIsSubmitting(false);
       setOpen(false);
       reset();
@@ -64,8 +66,9 @@ export function ClearFlagDialog({ flag }: { flag: LinkedEntityFlag }) {
         <DialogHeader>
           <DialogTitle>Clear linked-entity flag {flag.id}</DialogTitle>
           <DialogDescription>
-            Clearing requires both the penalty fee acknowledgment and a supporting
-            document. Both are needed - the action stays disabled until then.
+            Clearing requires both the flag clearance fee acknowledgment and a
+            supporting document. Both are needed - the action stays disabled
+            until then.
           </DialogDescription>
         </DialogHeader>
 
@@ -78,7 +81,7 @@ export function ClearFlagDialog({ flag }: { flag: LinkedEntityFlag }) {
               className="mt-0.5"
             />
             <Label htmlFor="ackFee" className="text-sm font-normal leading-snug">
-              I acknowledge the penalty fee of{" "}
+              I acknowledge the flag clearance fee of{" "}
               <span className="font-medium text-foreground">
                 {formatBDT(flag.penaltyFeeBdt)}
               </span>{" "}

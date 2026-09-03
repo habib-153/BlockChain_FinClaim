@@ -1,4 +1,4 @@
-import { Snowflake } from "lucide-react";
+import { Check, Snowflake, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -17,14 +17,17 @@ export function ClaimTable({
   showReceivableId = false,
   showLender = true,
   onToggleFreeze,
+  onDecide,
   emptyMessage = "No claims to show yet.",
 }: {
   claims: Claim[];
   showReceivableId?: boolean;
   showLender?: boolean;
   onToggleFreeze?: (claimId: string, frozen: boolean) => void;
+  onDecide?: (claimId: string, decision: "APPROVED" | "REJECTED") => void;
   emptyMessage?: string;
 }) {
+  const showControls = !!(onToggleFreeze || onDecide);
   if (claims.length === 0) {
     return (
       <div className="rounded-lg border border-dashed py-8 text-center text-sm text-muted-foreground">
@@ -45,7 +48,7 @@ export function ClaimTable({
             <TableHead>Amount</TableHead>
             <TableHead>Submitted</TableHead>
             <TableHead>Status</TableHead>
-            {onToggleFreeze && <TableHead className="text-right">Regulator</TableHead>}
+            {showControls && <TableHead className="text-right">Controls</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -76,16 +79,36 @@ export function ClaimTable({
                   )}
                 </div>
               </TableCell>
-              {onToggleFreeze && (
+              {showControls && (
                 <TableCell className="text-right">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onToggleFreeze(c.id, !c.frozen)}
-                  >
-                    <Snowflake />
-                    {c.frozen ? "Unfreeze" : "Freeze"}
-                  </Button>
+                  <div className="flex justify-end gap-2">
+                    {onToggleFreeze && c.status !== "PENDING" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onToggleFreeze(c.id, !c.frozen)}
+                      >
+                        <Snowflake />
+                        {c.frozen ? "Unfreeze" : "Freeze"}
+                      </Button>
+                    )}
+                    {onDecide && c.status === "PENDING" && (
+                      <>
+                        <Button size="sm" onClick={() => onDecide(c.id, "APPROVED")}>
+                          <Check />
+                          Approve
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onDecide(c.id, "REJECTED")}
+                        >
+                          <X />
+                          Reject
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </TableCell>
               )}
             </TableRow>

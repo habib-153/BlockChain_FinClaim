@@ -1,8 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { SendHorizonal } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { CapacityMeter } from "@/components/claim/CapacityMeter";
 import { ClaimTable } from "@/components/claim/ClaimTable";
 import { useAppData } from "@/hooks/useAppData";
@@ -10,29 +8,42 @@ import { useSession } from "@/hooks/useSession";
 
 export default function LenderDashboardPage() {
   const { user } = useSession();
-  const { receivables, claims } = useAppData();
+  const { receivables, claims, decideClaim } = useAppData();
 
   const activeReceivables = receivables.filter((r) => r.status === "ACTIVE");
-  const ownClaims = claims.filter((c) => c.lenderName === user?.institution);
+  // Requests bundled into a receivable submission sit PENDING even before the
+  // buyer attests - hide those from the bank's queue until attestation has
+  // run the auto-reject check, same as decideClaim itself requires.
+  const activeReceivableIds = new Set(activeReceivables.map((r) => r.id));
+  const ownClaims = claims.filter(
+    (c) => c.lenderName === user?.institution && activeReceivableIds.has(c.receivableId)
+  );
+
+  const handleDecide = (claimId: string, decision: "APPROVED" | "REJECTED") => {
+    const result = decideClaim(claimId, decision, user?.institution ?? "");
+    if (!result) {
+      toast.error(
+        decision === "APPROVED"
+          ? "No longer enough remaining capacity to approve this request."
+          : "Unable to update this request."
+      );
+      return;
+    }
+    toast.success(
+      decision === "APPROVED" ? `${claimId} approved.` : `${claimId} declined.`
+    );
+  };
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-semibold tracking-tight">
-            {user?.institution} - capacity view
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Remaining financing room per receivable, and your own claim history -
-            other lenders&apos; positions are never shown here.
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/lender/claims/new">
-            <SendHorizonal />
-            Submit claim
-          </Link>
-        </Button>
+      <div>
+        <h1 className="text-lg font-semibold tracking-tight">
+          {user?.institution} - capacity view
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Remaining financing room per receivable, and financing requests
+          directed to you - other lenders&apos; positions are never shown here.
+        </p>
       </div>
 
       <div className="space-y-3">
@@ -51,12 +62,13 @@ export default function LenderDashboardPage() {
       </div>
 
       <div className="space-y-3">
-        <h2 className="text-sm font-semibold tracking-tight">Your claims</h2>
+        <h2 className="text-sm font-semibold tracking-tight">Financing requests to you</h2>
         <ClaimTable
           claims={ownClaims}
           showReceivableId
           showLender={false}
-          emptyMessage="You haven't submitted any claims yet."
+          onDecide={handleDecide}
+          emptyMessage="No financing requests have been directed to you yet."
         />
       </div>
     </div>

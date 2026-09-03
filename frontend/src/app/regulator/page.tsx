@@ -1,6 +1,5 @@
 "use client";
 
-import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CapacityMeter } from "@/components/claim/CapacityMeter";
 import { ClaimTable } from "@/components/claim/ClaimTable";
@@ -9,20 +8,15 @@ import { AuditLogList } from "@/components/audit/AuditLogList";
 import { useAppData } from "@/hooks/useAppData";
 
 export default function RegulatorDashboardPage() {
-  const { receivables, claims, anchors, auditEvents, setClaimFrozen } = useAppData();
-
-  const handleToggleFreeze = (claimId: string, frozen: boolean) => {
-    setClaimFrozen(claimId, frozen);
-    toast.success(frozen ? `${claimId} frozen.` : `${claimId} unfrozen.`);
-  };
+  const { receivables, claims, anchors, auditEvents } = useAppData();
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-lg font-semibold tracking-tight">Regulator oversight</h1>
         <p className="text-sm text-muted-foreground">
-          Full cross-lender visibility, audit trail, and claim controls for
-          Bangladesh Bank supervision.
+          Full cross-lender visibility and audit trail for Bangladesh Bank
+          supervision - monitoring only, no transaction controls.
         </p>
       </div>
 
@@ -39,7 +33,6 @@ export default function RegulatorDashboardPage() {
               <ClaimTable
                 claims={claims.filter((c) => c.receivableId === r.id)}
                 showLender
-                onToggleFreeze={handleToggleFreeze}
                 emptyMessage="No claims submitted against this receivable yet."
               />
             </div>

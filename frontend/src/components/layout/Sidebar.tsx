@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   FilePlus2,
   LayoutDashboard,
-  ShieldAlert,
+  SendHorizonal,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -21,17 +21,13 @@ interface NavItem {
 const NAV_ITEMS: Record<Role, NavItem[]> = {
   seller: [
     { label: "Dashboard", href: "/seller", icon: LayoutDashboard },
-    { label: "Submit receivable", href: "/seller/receivables/new", icon: FilePlus2 },
+    { label: "New financing application", href: "/seller/receivables/new", icon: FilePlus2 },
+    { label: "Request more financing", href: "/seller/financing/new", icon: SendHorizonal },
   ],
   buyer: [{ label: "Dashboard", href: "/buyer", icon: LayoutDashboard }],
-  lender: [
-    { label: "Dashboard", href: "/lender", icon: LayoutDashboard },
-    { label: "Submit claim", href: "/lender/claims/new", icon: FilePlus2 },
-  ],
-  regulator: [
-    { label: "Dashboard", href: "/regulator", icon: LayoutDashboard },
-    { label: "Review queue", href: "/regulator/flags", icon: ShieldAlert },
-  ],
+  lender: [{ label: "Dashboard", href: "/lender", icon: LayoutDashboard }],
+  regulator: [{ label: "Dashboard", href: "/regulator", icon: LayoutDashboard }],
+  admin: [{ label: "Dashboard", href: "/admin", icon: LayoutDashboard }],
 };
 
 export const ROLE_LABELS: Record<Role, string> = {
@@ -39,6 +35,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   buyer: "Buyer",
   lender: "Lender",
   regulator: "Regulator",
+  admin: "Admin",
 };
 
 export function Sidebar({ role, onNavigate }: { role: Role; onNavigate?: () => void }) {

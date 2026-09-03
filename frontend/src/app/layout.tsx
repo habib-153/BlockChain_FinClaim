@@ -17,7 +17,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SessionProvider>
           <AppDataProvider>
             {children}
-            <Toaster position="top-right" />
+            <Toaster position="bottom-right" />
           </AppDataProvider>
         </SessionProvider>
       </body>

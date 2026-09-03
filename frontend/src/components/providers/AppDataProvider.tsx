@@ -16,6 +16,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     submitReceivable: appDataStore.submitReceivable,
     attestReceivable: appDataStore.attestReceivable,
     submitClaim: appDataStore.submitClaim,
+    decideClaim: appDataStore.decideClaim,
+    raiseFlag: appDataStore.raiseFlag,
     clearFlag: appDataStore.clearFlag,
     setClaimFrozen: appDataStore.setClaimFrozen,
     resetToFixtures: appDataStore.resetToFixtures,

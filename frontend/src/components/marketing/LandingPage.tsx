@@ -45,13 +45,13 @@ const FEATURES = [
     icon: ShieldAlert,
     title: "Linked-entity fraud containment",
     description:
-      "Claims connected through a shared director, signatory, or address are flagged for human review, not auto-blocked - clearing one requires a penalty fee and verified documentation.",
+      "Claims connected through a shared director, signatory, or address are flagged for human review, not auto-blocked - clearing one requires a clearance fee and verified documentation.",
   },
   {
     icon: Landmark,
-    title: "Regulator-anchored consortium",
+    title: "Regulator-supervised, FinClaim-operated",
     description:
-      "Bangladesh Bank anchors the network without running it alone. Freezing a claim or resolving a dispute needs the regulator plus a rotating panel of consortium members.",
+      "Bangladesh Bank supervises the full network with real-time visibility into every transaction. Freezing a transaction or clearing a flag is handled by FinClaim's own trust and compliance team.",
   },
   {
     icon: FileCheck2,
@@ -120,14 +120,14 @@ const ROLES = [
     role: "Lender",
     who: "Bank / NBFI",
     description:
-      "Checks remaining financing capacity and submits claims - seeing only its own claim history, never a competitor's.",
+      "Reviews financing requests directed to it against remaining capacity - seeing only its own request history, never a competitor's.",
   },
   {
     icon: ScrollText,
     role: "Regulator",
     who: "Bangladesh Bank",
     description:
-      "Supervises the full consortium picture: every claim, the audit log, and the linked-entity review queue.",
+      "Monitors the full consortium picture: every transaction and the audit log, in real time.",
   },
 ];
 

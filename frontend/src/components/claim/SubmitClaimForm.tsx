@@ -16,20 +16,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAppData } from "@/hooks/useAppData";
+import { useSession } from "@/hooks/useSession";
 import { summarizeCapacity } from "@/lib/capacity";
+import { LENDER_INSTITUTIONS } from "@/lib/fixtures/users";
 import { formatBDT } from "@/lib/utils";
 import type { ClaimType } from "@/lib/types";
 
-export function SubmitClaimForm({ lenderName }: { lenderName: string }) {
+/** Lets the seller request additional financing from a specific bank against
+ * one of their own already-ACTIVE receivables (evaluated immediately, since
+ * attestation - and any request bundled at submission time - already happened). */
+export function SubmitClaimForm() {
   const router = useRouter();
+  const { user } = useSession();
   const { receivables, claims, submitClaim } = useAppData();
 
   const activeReceivables = useMemo(
-    () => receivables.filter((r) => r.status === "ACTIVE"),
-    [receivables]
+    () => receivables.filter((r) => r.status === "ACTIVE" && r.sellerName === user?.institution),
+    [receivables, user]
   );
 
   const [receivableId, setReceivableId] = useState(activeReceivables[0]?.id ?? "");
+  const [lenderName, setLenderName] = useState(LENDER_INSTITUTIONS[0] ?? "");
   const [type, setType] = useState<ClaimType>("Pledge");
   const [amount, setAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,8 +49,8 @@ export function SubmitClaimForm({ lenderName }: { lenderName: string }) {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const amountBdt = Number(amount);
-    if (!selectedReceivable || !amountBdt || amountBdt <= 0) {
-      toast.error("Choose a receivable and enter a valid amount.");
+    if (!selectedReceivable || !lenderName || !amountBdt || amountBdt <= 0) {
+      toast.error("Choose a receivable, a bank, and enter a valid amount.");
       return;
     }
 
@@ -56,12 +63,12 @@ export function SubmitClaimForm({ lenderName }: { lenderName: string }) {
         amountBdt,
       });
       setIsSubmitting(false);
-      if (claim.status === "APPROVED") {
-        toast.success(`${claim.id} approved - ${formatBDT(claim.amountBdt)} allocated.`);
-      } else {
+      if (claim.status === "REJECTED") {
         toast.error(`${claim.id} rejected - ${claim.rejectionReason}`);
+      } else {
+        toast.success(`${claim.id} submitted - awaiting ${lenderName}'s review.`);
       }
-      router.push("/lender");
+      router.push("/seller");
     }, 700);
   };
 
@@ -69,7 +76,7 @@ export function SubmitClaimForm({ lenderName }: { lenderName: string }) {
     return (
       <Card>
         <CardContent className="py-8 text-center text-sm text-muted-foreground">
-          No active receivables are currently open for claims.
+          You don&apos;t have any attested receivables open for financing yet.
         </CardContent>
       </Card>
     );
@@ -105,7 +112,23 @@ export function SubmitClaimForm({ lenderName }: { lenderName: string }) {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="type">Claim type</Label>
+            <Label htmlFor="lender">Request financing from</Label>
+            <Select value={lenderName} onValueChange={setLenderName}>
+              <SelectTrigger id="lender" className="w-full">
+                <SelectValue placeholder="Select a bank" />
+              </SelectTrigger>
+              <SelectContent>
+                {LENDER_INSTITUTIONS.map((name) => (
+                  <SelectItem key={name} value={name}>
+                    {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="type">Financing type</Label>
             <Select value={type} onValueChange={(v) => setType(v as ClaimType)}>
               <SelectTrigger id="type" className="w-full">
                 <SelectValue />
@@ -118,7 +141,7 @@ export function SubmitClaimForm({ lenderName }: { lenderName: string }) {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="amount">Claim amount (BDT)</Label>
+            <Label htmlFor="amount">Requested amount (BDT)</Label>
             <Input
               id="amount"
               type="number"
@@ -133,7 +156,7 @@ export function SubmitClaimForm({ lenderName }: { lenderName: string }) {
 
           <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
             {isSubmitting ? <Loader2 className="animate-spin" /> : <SendHorizonal />}
-            {isSubmitting ? "Submitting…" : "Submit claim"}
+            {isSubmitting ? "Submitting…" : "Request financing"}
           </Button>
         </form>
       </CardContent>

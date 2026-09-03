@@ -38,4 +38,15 @@ export const CLAIMS: Claim[] = [
     submittedAt: "2026-08-21T09:50:00Z",
     frozen: false,
   },
+  {
+    id: "CLM-2026-00934",
+    receivableId: "RCV-2026-05102",
+    lenderName: "Meghna NBFI Ltd.",
+    type: "Pledge",
+    amountBdt: 400_000,
+    status: "PENDING",
+    submittedAt: "2026-09-02T10:40:00Z",
+    frozen: false,
+    invoiceFileName: "KGL-INV-05102.pdf",
+  },
 ];

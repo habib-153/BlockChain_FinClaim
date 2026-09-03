@@ -1,4 +1,4 @@
-export type Role = "seller" | "buyer" | "lender" | "regulator";
+export type Role = "seller" | "buyer" | "lender" | "regulator" | "admin";
 
 export interface UserIdentity {
   email: string;
@@ -23,7 +23,7 @@ export interface Receivable {
 }
 
 export type ClaimType = "Pledge" | "Assignment";
-export type ClaimStatus = "APPROVED" | "REJECTED";
+export type ClaimStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 export interface Claim {
   id: string;
@@ -35,6 +35,7 @@ export interface Claim {
   rejectionReason?: string;
   submittedAt: string;
   frozen: boolean;
+  invoiceFileName?: string;
 }
 
 export type FlagStatus = "PENDING_REVIEW" | "CLEARED";
@@ -49,6 +50,8 @@ export interface LinkedEntityFlag {
   status: FlagStatus;
   reason: string;
   raisedAt: string;
+  raisedBy: string;
+  relatedReceivableId?: string;
   clearedAt?: string;
   clearedDocumentName?: string;
 }

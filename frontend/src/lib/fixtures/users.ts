@@ -51,9 +51,20 @@ export const USERS: UserIdentity[] = [
     title: "Reviewer, Financial Institutions Supervision Wing",
     institution: "Bangladesh Bank",
   },
+  {
+    email: "trust@finclaim.com.bd",
+    role: "admin",
+    name: "MD Samiul Islam Tamim",
+    title: "Head of Trust & Compliance",
+    institution: "FinClaim",
+  },
 ];
 
 export function findUserByEmail(email: string): UserIdentity | undefined {
   const normalized = email.trim().toLowerCase();
   return USERS.find((u) => u.email.toLowerCase() === normalized);
 }
+
+export const LENDER_INSTITUTIONS = USERS.filter((u) => u.role === "lender").map(
+  (u) => u.institution
+);

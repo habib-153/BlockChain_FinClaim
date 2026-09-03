@@ -38,7 +38,7 @@ export function FlagReviewCard({ flag }: { flag: LinkedEntityFlag }) {
             <div className="font-medium">{formatBDT(flag.invoiceAmountBdt)}</div>
           </div>
           <div>
-            <div className="text-xs text-muted-foreground">Penalty fee to clear</div>
+            <div className="text-xs text-muted-foreground">Flag clearance fee</div>
             <div className="font-medium text-finclaim-amber-600">
               {formatBDT(flag.penaltyFeeBdt)}
             </div>

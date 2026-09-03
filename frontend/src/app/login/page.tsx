@@ -18,6 +18,7 @@ const ROLE_LABELS: Record<UserIdentity["role"], string> = {
   buyer: "Buyer",
   lender: "Lender",
   regulator: "Regulator",
+  admin: "Admin",
 };
 
 export default function LoginPage() {

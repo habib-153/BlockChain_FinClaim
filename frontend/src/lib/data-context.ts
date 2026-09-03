@@ -6,7 +6,11 @@ import type {
   LinkedEntityFlag,
   Receivable,
 } from "@/lib/types";
-import type { SubmitClaimInput, SubmitReceivableInput } from "@/lib/app-data-store";
+import type {
+  RaiseFlagInput,
+  SubmitClaimInput,
+  SubmitReceivableInput,
+} from "@/lib/app-data-store";
 
 export interface AppDataContextValue {
   receivables: Receivable[];
@@ -17,8 +21,14 @@ export interface AppDataContextValue {
   submitReceivable: (input: SubmitReceivableInput) => Receivable;
   attestReceivable: (receivableId: string) => void;
   submitClaim: (input: SubmitClaimInput) => Claim;
-  clearFlag: (flagId: string, documentName: string) => void;
-  setClaimFrozen: (claimId: string, frozen: boolean) => void;
+  decideClaim: (
+    claimId: string,
+    decision: "APPROVED" | "REJECTED",
+    actorName: string
+  ) => Claim | null;
+  raiseFlag: (input: RaiseFlagInput, actorName: string) => LinkedEntityFlag;
+  clearFlag: (flagId: string, documentName: string, actorName: string) => void;
+  setClaimFrozen: (claimId: string, frozen: boolean, actorName: string) => void;
   resetToFixtures: () => void;
 }
 

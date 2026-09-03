@@ -16,6 +16,10 @@ export function nextClaimId(existingIds: string[]): string {
   return nextSequential(existingIds, "CLM", 5);
 }
 
+export function nextFlagId(existingIds: string[]): string {
+  return nextSequential(existingIds, "FLAG", 4);
+}
+
 export function nextEventId(existingIds: string[]): string {
   const usedNumbers = existingIds
     .map((id) => Number(id.split("-").pop()))

@@ -2,8 +2,8 @@ import { ANCHORS, AUDIT_EVENTS } from "@/lib/fixtures/auditLog";
 import { CLAIMS } from "@/lib/fixtures/claims";
 import { FLAGS } from "@/lib/fixtures/flags";
 import { RECEIVABLES, SELLER_NAME } from "@/lib/fixtures/receivables";
-import { evaluateClaim } from "@/lib/capacity";
-import { nextClaimId, nextEventId, nextReceivableId } from "@/lib/ids";
+import { evaluateClaim, summarizeCapacity } from "@/lib/capacity";
+import { nextClaimId, nextEventId, nextFlagId, nextReceivableId } from "@/lib/ids";
 import type {
   AnchorEvent,
   AuditEvent,
@@ -28,6 +28,9 @@ export interface SubmitReceivableInput {
   amountBdt: number;
   description: string;
   invoiceFileName?: string;
+  targetLenderName: string;
+  claimType: ClaimType;
+  requestedAmountBdt: number;
 }
 
 export interface SubmitClaimInput {
@@ -35,6 +38,16 @@ export interface SubmitClaimInput {
   lenderName: string;
   type: ClaimType;
   amountBdt: number;
+  invoiceFileName?: string;
+}
+
+export interface RaiseFlagInput {
+  claimantName: string;
+  linkedEntityName: string;
+  sharedDirector: string;
+  invoiceAmountBdt: number;
+  reason: string;
+  relatedReceivableId?: string;
 }
 
 function fixtureDefaults(): AppDataState {
@@ -124,16 +137,36 @@ export function submitReceivable(input: SubmitReceivableInput): Receivable {
     submittedAt: new Date().toISOString(),
     invoiceFileName: input.invoiceFileName,
   };
-  const event = appendAuditEvent(
+  const claim: Claim = {
+    id: nextClaimId(state.claims.map((c) => c.id)),
+    receivableId: id,
+    lenderName: input.targetLenderName,
+    type: input.claimType,
+    amountBdt: input.requestedAmountBdt,
+    status: "PENDING",
+    submittedAt: new Date().toISOString(),
+    frozen: false,
+    invoiceFileName: input.invoiceFileName,
+  };
+  const receivableEvent = appendAuditEvent(
     state,
     SELLER_NAME,
     "Receivable submitted",
     `${id} (${input.amountBdt.toLocaleString("en-US")} BDT) submitted for buyer attestation.`
   );
+  const claimEvent = appendAuditEvent(
+    { ...state, auditEvents: [receivableEvent, ...state.auditEvents] },
+    SELLER_NAME,
+    "Financing request submitted",
+    `${input.claimType} request ${claim.id} for ${input.requestedAmountBdt.toLocaleString(
+      "en-US"
+    )} BDT to ${input.targetLenderName} against ${id} - pending buyer attestation.`
+  );
   persist({
     ...state,
     receivables: [...state.receivables, created],
-    auditEvents: [event, ...state.auditEvents],
+    claims: [...state.claims, claim],
+    auditEvents: [claimEvent, receivableEvent, ...state.auditEvents],
   });
   return created;
 }
@@ -143,20 +176,48 @@ export function attestReceivable(receivableId: string): void {
   const target = state.receivables.find((r) => r.id === receivableId);
   if (!target || target.status === "ACTIVE") return;
 
-  const event = appendAuditEvent(
+  const activatedReceivable: Receivable = {
+    ...target,
+    status: "ACTIVE",
+    attestedAt: new Date().toISOString(),
+  };
+  const attestEvent = appendAuditEvent(
     state,
     target.buyerName,
     "Receivable attested",
     `Buyer confirmed obligation on ${receivableId} (${target.amountBdt.toLocaleString("en-US")} BDT).`
   );
+
+  // Requests bundled at submission time only get the auto-reject check now
+  // that attestation has happened - none of them auto-approve, so each is
+  // evaluated independently against the same (unaffected-by-this-loop)
+  // APPROVED-claims capacity snapshot.
+  const events: AuditEvent[] = [];
+  const claims = state.claims.map((c) => {
+    if (c.status !== "PENDING" || c.receivableId !== receivableId) return c;
+    const outcome = evaluateClaim(activatedReceivable, state.claims, c.amountBdt);
+    events.push(
+      appendAuditEvent(
+        { ...state, auditEvents: [...events, attestEvent, ...state.auditEvents] },
+        c.lenderName,
+        outcome.status === "REJECTED" ? "Financing request rejected" : "Financing request pending review",
+        `${c.type} request ${c.id} for ${c.amountBdt.toLocaleString("en-US")} BDT against ${receivableId} ${
+          outcome.status === "REJECTED"
+            ? "rejected - exceeds available capacity"
+            : `sent to ${c.lenderName} for review`
+        }.`
+      )
+    );
+    return outcome.status === "REJECTED"
+      ? { ...c, status: outcome.status, rejectionReason: outcome.rejectionReason }
+      : c;
+  });
+
   persist({
     ...state,
-    receivables: state.receivables.map((r) =>
-      r.id === receivableId
-        ? { ...r, status: "ACTIVE", attestedAt: new Date().toISOString() }
-        : r
-    ),
-    auditEvents: [event, ...state.auditEvents],
+    receivables: state.receivables.map((r) => (r.id === receivableId ? activatedReceivable : r)),
+    claims,
+    auditEvents: [...events.reverse(), attestEvent, ...state.auditEvents],
   });
 }
 
@@ -177,16 +238,19 @@ export function submitClaim(input: SubmitClaimInput): Claim {
     rejectionReason: outcome.rejectionReason,
     submittedAt: new Date().toISOString(),
     frozen: false,
+    invoiceFileName: input.invoiceFileName,
   };
 
   const event = appendAuditEvent(
     state,
-    input.lenderName,
-    outcome.status === "APPROVED" ? "Claim approved" : "Claim rejected",
-    `${input.type} claim ${created.id} for ${input.amountBdt.toLocaleString(
+    SELLER_NAME,
+    outcome.status === "REJECTED" ? "Financing request rejected" : "Financing request submitted",
+    `${input.type} request ${created.id} for ${input.amountBdt.toLocaleString(
       "en-US"
-    )} BDT against ${input.receivableId} ${
-      outcome.status === "APPROVED" ? "approved" : "rejected - exceeds available capacity"
+    )} BDT to ${input.lenderName} against ${input.receivableId} ${
+      outcome.status === "REJECTED"
+        ? "rejected - exceeds available capacity"
+        : `sent to ${input.lenderName} for review`
     }.`
   );
 
@@ -198,18 +262,96 @@ export function submitClaim(input: SubmitClaimInput): Claim {
   return created;
 }
 
-export function clearFlag(flagId: string, documentName: string): void {
+/**
+ * The bank's own manual decision on a PENDING financing request - approval
+ * is never automatic. Returns null (no-op, nothing persisted) if the claim
+ * isn't PENDING, or if approving it would now exceed remaining capacity
+ * (capacity is re-checked at decision time, not just at submission time,
+ * since other requests may have been approved in the meantime) - the caller
+ * should surface that as an error rather than silently rejecting the claim.
+ */
+export function decideClaim(
+  claimId: string,
+  decision: "APPROVED" | "REJECTED",
+  actorName: string
+): Claim | null {
+  const state = getSnapshot();
+  const target = state.claims.find((c) => c.id === claimId);
+  if (!target || target.status !== "PENDING") return null;
+  const receivable = state.receivables.find((r) => r.id === target.receivableId);
+  if (!receivable) return null;
+
+  if (decision === "APPROVED") {
+    const { remainingBdt } = summarizeCapacity(receivable, state.claims);
+    if (target.amountBdt > remainingBdt) return null;
+  }
+
+  const updated: Claim = {
+    ...target,
+    status: decision,
+    rejectionReason: decision === "REJECTED" ? `Declined by ${actorName}.` : undefined,
+  };
+
+  const event = appendAuditEvent(
+    state,
+    actorName,
+    decision === "APPROVED" ? "Financing request approved" : "Financing request rejected",
+    `${target.type} request ${claimId} for ${target.amountBdt.toLocaleString(
+      "en-US"
+    )} BDT against ${target.receivableId} ${decision === "APPROVED" ? "approved" : "rejected"} by ${actorName}.`
+  );
+
+  persist({
+    ...state,
+    claims: state.claims.map((c) => (c.id === claimId ? updated : c)),
+    auditEvents: [event, ...state.auditEvents],
+  });
+  return updated;
+}
+
+export function raiseFlag(input: RaiseFlagInput, actorName: string): LinkedEntityFlag {
+  const state = getSnapshot();
+  const created: LinkedEntityFlag = {
+    id: nextFlagId(state.flags.map((f) => f.id)),
+    claimantName: input.claimantName,
+    linkedEntityName: input.linkedEntityName,
+    sharedDirector: input.sharedDirector,
+    invoiceAmountBdt: input.invoiceAmountBdt,
+    penaltyFeeBdt: Math.round(input.invoiceAmountBdt * 0.0002),
+    status: "PENDING_REVIEW",
+    reason: input.reason,
+    raisedAt: new Date().toISOString(),
+    raisedBy: actorName,
+    relatedReceivableId: input.relatedReceivableId,
+  };
+
+  const event = appendAuditEvent(
+    state,
+    actorName,
+    "Linked-entity flag raised",
+    `${input.claimantName} flagged (${created.id}) - shares director ${input.sharedDirector} with ${input.linkedEntityName}.`
+  );
+
+  persist({
+    ...state,
+    flags: [...state.flags, created],
+    auditEvents: [event, ...state.auditEvents],
+  });
+  return created;
+}
+
+export function clearFlag(flagId: string, documentName: string, actorName: string): void {
   const state = getSnapshot();
   const target = state.flags.find((f) => f.id === flagId);
   if (!target) return;
 
   const event = appendAuditEvent(
     state,
-    "Bangladesh Bank - Financial Institutions Supervision Wing",
+    actorName,
     "Linked-entity flag cleared",
-    `${flagId} (${target.claimantName}) cleared - penalty fee ${target.penaltyFeeBdt.toLocaleString(
+    `${flagId} (${target.claimantName}) cleared - flag clearance fee ${target.penaltyFeeBdt.toLocaleString(
       "en-US"
-    )} BDT acknowledged, supporting document ${documentName} on file.`
+    )} BDT paid, supporting document ${documentName} on file.`
   );
 
   persist({
@@ -228,16 +370,16 @@ export function clearFlag(flagId: string, documentName: string): void {
   });
 }
 
-export function setClaimFrozen(claimId: string, frozen: boolean): void {
+export function setClaimFrozen(claimId: string, frozen: boolean, actorName: string): void {
   const state = getSnapshot();
   const target = state.claims.find((c) => c.id === claimId);
   if (!target) return;
 
   const event = appendAuditEvent(
     state,
-    "Bangladesh Bank - Financial Institutions Supervision Wing",
-    frozen ? "Claim frozen" : "Claim unfrozen",
-    `${claimId} against ${target.receivableId} ${frozen ? "frozen" : "unfrozen"} by the regulator.`
+    actorName,
+    frozen ? "Transaction frozen" : "Transaction unfrozen",
+    `${claimId} against ${target.receivableId} ${frozen ? "frozen" : "unfrozen"} by ${actorName}.`
   );
 
   persist({
