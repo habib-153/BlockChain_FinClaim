@@ -5,12 +5,15 @@ import { AttestationCard } from "@/components/receivable/AttestationCard";
 import { ReceivableTable } from "@/components/receivable/ReceivableTable";
 import { useAppData } from "@/hooks/useAppData";
 import { useSession } from "@/hooks/useSession";
+import { SEED_RECEIVABLE_IDS } from "@/lib/fixtures/seedIds";
 
 export default function BuyerDashboardPage() {
   const { user } = useSession();
   const { receivables, attestReceivable } = useAppData();
 
-  const own = receivables.filter((r) => r.buyerName === user?.institution);
+  const own = receivables.filter(
+    (r) => r.buyerName === user?.institution && !SEED_RECEIVABLE_IDS.has(r.id)
+  );
   const pending = own.filter((r) => r.status === "PENDING");
   const active = own.filter((r) => r.status === "ACTIVE");
 

@@ -3,6 +3,7 @@
 import { ClaimTable } from "@/components/claim/ClaimTable";
 import { useAppData } from "@/hooks/useAppData";
 import { useSession } from "@/hooks/useSession";
+import { SEED_RECEIVABLE_IDS } from "@/lib/fixtures/seedIds";
 
 export default function LenderRequestsPage() {
   const { user } = useSession();
@@ -11,7 +12,9 @@ export default function LenderRequestsPage() {
   // Requests bundled into a receivable submission sit PENDING even before the
   // buyer attests - hide those until attestation has run the auto-reject check.
   const activeReceivableIds = new Set(
-    receivables.filter((r) => r.status === "ACTIVE").map((r) => r.id)
+    receivables
+      .filter((r) => r.status === "ACTIVE" && !SEED_RECEIVABLE_IDS.has(r.id))
+      .map((r) => r.id)
   );
   const ownClaims = claims
     .filter((c) => c.lenderName === user?.institution && activeReceivableIds.has(c.receivableId))

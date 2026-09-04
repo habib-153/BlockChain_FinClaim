@@ -18,26 +18,26 @@ import { SEED_RECEIVABLE_IDS } from "@/lib/fixtures/seedIds";
 import { USERS } from "@/lib/fixtures/users";
 import { formatBDT, formatDate } from "@/lib/utils";
 
-export default function BuyerReceivableDetailsPage() {
+export default function SellerReceivableDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useSession();
   const { receivables, claims } = useAppData();
 
   const receivable = receivables.find((r) => r.id === id);
-  const belongsToViewer = receivable?.buyerName === user?.institution;
+  const belongsToViewer = receivable?.sellerName === user?.institution;
 
   if (!receivable || !belongsToViewer || SEED_RECEIVABLE_IDS.has(receivable.id)) {
     return (
       <div className="space-y-4">
         <BackLink />
         <div className="rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground">
-          This obligation doesn&apos;t exist or isn&apos;t yours.
+          This receivable doesn&apos;t exist or isn&apos;t yours.
         </div>
       </div>
     );
   }
 
-  const seller = USERS.find((u) => u.institution === receivable.sellerName && u.role === "seller");
+  const buyer = USERS.find((u) => u.institution === receivable.buyerName && u.role === "buyer");
   const capacity = summarizeCapacity(receivable, claims);
   const ownClaims = claims.filter((c) => c.receivableId === receivable.id);
 
@@ -56,7 +56,7 @@ export default function BuyerReceivableDetailsPage() {
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Obligation</CardTitle>
+            <CardTitle>Receivable</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             <Row label="Face value" value={formatBDT(receivable.amountBdt)} />
@@ -78,19 +78,19 @@ export default function BuyerReceivableDetailsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building2 className="size-4 text-finclaim-teal-700" />
-              Seller
+              Buyer
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <Row label="Institution" value={receivable.sellerName} />
-            {seller && <Row label="Contact" value={`${seller.name}, ${seller.title}`} />}
+            <Row label="Institution" value={receivable.buyerName} />
+            {buyer && <Row label="Contact" value={`${buyer.name}, ${buyer.title}`} />}
           </CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Financing room pledged against this obligation</CardTitle>
+          <CardTitle>Financing room pledged against this receivable</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
@@ -121,13 +121,12 @@ export default function BuyerReceivableDetailsPage() {
       </Card>
 
       <div className="space-y-3">
-        <h2 className="text-sm font-semibold tracking-tight">
-          Financing requests claiming this obligation
-        </h2>
+        <h2 className="text-sm font-semibold tracking-tight">Your financing requests against this receivable</h2>
         <ClaimTable
           claims={ownClaims}
           showLender
-          emptyMessage="No bank has requested financing against this obligation yet."
+          getHref={(c) => `/seller/financing/${c.id}`}
+          emptyMessage="You haven't requested financing against this receivable yet."
         />
       </div>
     </div>
@@ -137,7 +136,7 @@ export default function BuyerReceivableDetailsPage() {
 function BackLink() {
   return (
     <Link
-      href="/buyer"
+      href="/seller"
       className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
     >
       <ArrowLeft className="size-4" />

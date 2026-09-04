@@ -2,19 +2,13 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useState } from "react";
-import { ArrowLeft, Building2, Check, FileText, X } from "lucide-react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { ArrowLeft, Building2, FileText } from "lucide-react";
 import {
   Card,
   CardContent,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/receivable/ReceivableStatusBadge";
 import { useAppData } from "@/hooks/useAppData";
 import { useSession } from "@/hooks/useSession";
@@ -23,66 +17,28 @@ import { SEED_CLAIM_IDS } from "@/lib/fixtures/seedIds";
 import { USERS } from "@/lib/fixtures/users";
 import { formatBDT, formatDate } from "@/lib/utils";
 
-export default function LenderRequestDetailsPage() {
+export default function SellerFinancingRequestDetailsPage() {
   const { claimId } = useParams<{ claimId: string }>();
   const { user } = useSession();
-  const { receivables, claims, decideClaim } = useAppData();
+  const { receivables, claims } = useAppData();
 
   const claim = claims.find((c) => c.id === claimId);
   const receivable = claim ? receivables.find((r) => r.id === claim.receivableId) : undefined;
-  const belongsToViewer = claim?.lenderName === user?.institution;
-
-  const [amount, setAmount] = useState(() => String(claim?.amountBdt ?? ""));
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const belongsToViewer = receivable?.sellerName === user?.institution;
 
   if (!claim || !receivable || !belongsToViewer || SEED_CLAIM_IDS.has(claim.id)) {
     return (
       <div className="space-y-4">
         <BackLink />
         <div className="rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground">
-          This request doesn&apos;t exist or wasn&apos;t directed to you.
+          This request doesn&apos;t exist or isn&apos;t yours.
         </div>
       </div>
     );
   }
 
-  const seller = USERS.find((u) => u.institution === receivable.sellerName && u.role === "seller");
+  const lender = USERS.find((u) => u.institution === claim.lenderName && u.role === "lender");
   const capacity = summarizeCapacity(receivable, claims);
-  const maxApprovable = Math.min(claim.amountBdt, capacity.remainingBdt);
-
-  const handleDecide = (decision: "APPROVED" | "REJECTED") => {
-    const approvedAmountBdt = decision === "APPROVED" ? Number(amount) : undefined;
-
-    if (decision === "APPROVED") {
-      if (!approvedAmountBdt || approvedAmountBdt <= 0) {
-        toast.error("Enter a valid approval amount.");
-        return;
-      }
-      if (approvedAmountBdt > claim.amountBdt) {
-        toast.error("Can't approve more than the amount requested.");
-        return;
-      }
-      if (approvedAmountBdt > capacity.remainingBdt) {
-        toast.error(`Only ${formatBDT(capacity.remainingBdt)} remains available on this receivable.`);
-        return;
-      }
-    }
-
-    setIsSubmitting(true);
-    window.setTimeout(() => {
-      const result = decideClaim(claim.id, decision, user?.institution ?? "", approvedAmountBdt);
-      setIsSubmitting(false);
-      if (!result) {
-        toast.error("Unable to update this request - capacity may have changed. Refresh and try again.");
-        return;
-      }
-      toast.success(
-        decision === "APPROVED"
-          ? `${claim.id} approved for ${formatBDT(approvedAmountBdt!)}.`
-          : `${claim.id} declined.`
-      );
-    }, 500);
-  };
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -139,12 +95,12 @@ export default function LenderRequestDetailsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building2 className="size-4 text-finclaim-teal-700" />
-              Seller
+              Lender
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <Row label="Institution" value={receivable.sellerName} />
-            {seller && <Row label="Contact" value={`${seller.name}, ${seller.title}`} />}
+            <Row label="Institution" value={claim.lenderName} />
+            {lender && <Row label="Contact" value={`${lender.name}, ${lender.title}`} />}
             <Row label="Buyer" value={receivable.buyerName} />
             <Row label="Invoice" value={receivable.description} />
           </CardContent>
@@ -185,50 +141,6 @@ export default function LenderRequestDetailsPage() {
           </div>
         </CardContent>
       </Card>
-
-      {claim.status === "PENDING" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Decide</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1.5">
-              <Label htmlFor="approve-amount">Amount to extend (BDT)</Label>
-              <Input
-                id="approve-amount"
-                type="number"
-                min={1}
-                max={maxApprovable}
-                step={1}
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                Seller requested {formatBDT(claim.amountBdt)}. You can approve up to{" "}
-                <span className="font-medium text-finclaim-emerald-500">
-                  {formatBDT(maxApprovable)}
-                </span>{" "}
-                (the lower of the request and remaining receivable capacity).
-              </p>
-            </div>
-          </CardContent>
-          <CardFooter className="justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isSubmitting}
-              onClick={() => handleDecide("REJECTED")}
-            >
-              <X />
-              Reject
-            </Button>
-            <Button type="button" disabled={isSubmitting} onClick={() => handleDecide("APPROVED")}>
-              <Check />
-              Approve
-            </Button>
-          </CardFooter>
-        </Card>
-      )}
     </div>
   );
 }
@@ -236,11 +148,11 @@ export default function LenderRequestDetailsPage() {
 function BackLink() {
   return (
     <Link
-      href="/lender/requests"
+      href="/seller"
       className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
     >
       <ArrowLeft className="size-4" />
-      Back to financing requests
+      Back to dashboard
     </Link>
   );
 }

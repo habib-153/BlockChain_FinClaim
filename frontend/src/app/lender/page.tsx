@@ -6,12 +6,15 @@ import { CapacityMeter } from "@/components/claim/CapacityMeter";
 import { ClaimTable } from "@/components/claim/ClaimTable";
 import { useAppData } from "@/hooks/useAppData";
 import { useSession } from "@/hooks/useSession";
+import { SEED_RECEIVABLE_IDS } from "@/lib/fixtures/seedIds";
 
 export default function LenderDashboardPage() {
   const { user } = useSession();
   const { receivables, claims } = useAppData();
 
-  const activeReceivables = receivables.filter((r) => r.status === "ACTIVE");
+  const activeReceivables = receivables.filter(
+    (r) => r.status === "ACTIVE" && !SEED_RECEIVABLE_IDS.has(r.id)
+  );
   // Requests bundled into a receivable submission sit PENDING even before the
   // buyer attests - hide those from the bank's queue until attestation has
   // run the auto-reject check, same as decideClaim itself requires.

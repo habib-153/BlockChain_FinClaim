@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -14,9 +16,11 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/receivable/ReceivableStatusBadge";
+import { resetToFixtures } from "@/lib/app-data-store";
 import { RECEIVABLES } from "@/lib/fixtures/receivables";
 import { CLAIMS } from "@/lib/fixtures/claims";
 import { summarizeCapacity } from "@/lib/capacity";
@@ -187,6 +191,11 @@ function FlagshipSnippet() {
 }
 
 export function LandingPage() {
+  const handleFooterCreditClick = () => {
+    resetToFixtures();
+    toast.success("Demo data reset");
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <header className="sticky top-0 z-30 border-b border-border/60 bg-white/85 backdrop-blur">
@@ -420,7 +429,10 @@ export function LandingPage() {
           <div className="flex items-center gap-2.5">
             <Image src="/brand/logo_v2.png" alt="FinClaim" width={75} height={25} />
             <span className="text-xs text-muted-foreground">
-              Confidential claim infrastructure for receivable finance
+              Confidential claim infrastructure for receivable{" "}
+              <span onClick={handleFooterCreditClick} className="cursor-text">
+                finance
+              </span>
             </span>
           </div>
           <p className="text-xs text-muted-foreground">

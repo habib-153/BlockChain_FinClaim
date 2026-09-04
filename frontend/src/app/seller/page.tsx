@@ -7,12 +7,15 @@ import { ClaimTable } from "@/components/claim/ClaimTable";
 import { ReceivableTable } from "@/components/receivable/ReceivableTable";
 import { useAppData } from "@/hooks/useAppData";
 import { useSession } from "@/hooks/useSession";
+import { SEED_RECEIVABLE_IDS } from "@/lib/fixtures/seedIds";
 
 export default function SellerDashboardPage() {
   const { user } = useSession();
   const { receivables, claims } = useAppData();
 
-  const own = receivables.filter((r) => r.sellerName === user?.institution);
+  const own = receivables.filter(
+    (r) => r.sellerName === user?.institution && !SEED_RECEIVABLE_IDS.has(r.id)
+  );
   const ownClaims = claims.filter((c) => own.some((r) => r.id === c.receivableId));
 
   return (
@@ -35,6 +38,7 @@ export default function SellerDashboardPage() {
 
       <ReceivableTable
         receivables={own}
+        getHref={(r) => `/seller/receivables/${r.id}`}
         emptyMessage="You haven't submitted any receivables yet."
       />
 
@@ -44,6 +48,7 @@ export default function SellerDashboardPage() {
           claims={ownClaims}
           showReceivableId
           showLender
+          getHref={(c) => `/seller/financing/${c.id}`}
           emptyMessage="You haven't requested financing from any bank yet."
         />
       </div>

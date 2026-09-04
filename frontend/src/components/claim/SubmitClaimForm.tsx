@@ -18,6 +18,7 @@ import {
 import { useAppData } from "@/hooks/useAppData";
 import { useSession } from "@/hooks/useSession";
 import { summarizeCapacity } from "@/lib/capacity";
+import { SEED_RECEIVABLE_IDS } from "@/lib/fixtures/seedIds";
 import { LENDER_INSTITUTIONS } from "@/lib/fixtures/users";
 import { formatBDT } from "@/lib/utils";
 import type { ClaimType } from "@/lib/types";
@@ -31,7 +32,13 @@ export function SubmitClaimForm() {
   const { receivables, claims, submitClaim } = useAppData();
 
   const activeReceivables = useMemo(
-    () => receivables.filter((r) => r.status === "ACTIVE" && r.sellerName === user?.institution),
+    () =>
+      receivables.filter(
+        (r) =>
+          r.status === "ACTIVE" &&
+          r.sellerName === user?.institution &&
+          !SEED_RECEIVABLE_IDS.has(r.id)
+      ),
     [receivables, user]
   );
 
