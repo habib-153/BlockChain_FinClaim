@@ -22,7 +22,9 @@ export default function BuyerDashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-lg font-semibold tracking-tight">Awaiting your attestation</h1>
+        <h1 className="text-lg font-semibold tracking-tight">
+          Awaiting your attestation
+        </h1>
         <p className="text-sm text-muted-foreground">
           Confirm the obligations your suppliers have registered against you.
         </p>
@@ -35,15 +37,23 @@ export default function BuyerDashboardPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {pending.map((r) => (
-            <AttestationCard key={r.id} receivable={r} onConfirm={handleConfirm} />
+            <AttestationCard
+              key={r.id}
+              receivable={r}
+              href={`/buyer/receivables/${r.id}`}
+              onConfirm={handleConfirm}
+            />
           ))}
         </div>
       )}
 
       <div className="space-y-3">
-        <h2 className="text-sm font-semibold tracking-tight">Confirmed obligations</h2>
+        <h2 className="text-sm font-semibold tracking-tight">
+          Confirmed obligations
+        </h2>
         <ReceivableTable
           receivables={active}
+          getHref={(r) => `/buyer/receivables/${r.id}`}
           emptyMessage="No confirmed obligations yet."
         />
       </div>

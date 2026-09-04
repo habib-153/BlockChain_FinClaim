@@ -1,6 +1,7 @@
 "use client";
 
-import { toast } from "sonner";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { CapacityMeter } from "@/components/claim/CapacityMeter";
 import { ClaimTable } from "@/components/claim/ClaimTable";
 import { useAppData } from "@/hooks/useAppData";
@@ -8,31 +9,17 @@ import { useSession } from "@/hooks/useSession";
 
 export default function LenderDashboardPage() {
   const { user } = useSession();
-  const { receivables, claims, decideClaim } = useAppData();
+  const { receivables, claims } = useAppData();
 
   const activeReceivables = receivables.filter((r) => r.status === "ACTIVE");
   // Requests bundled into a receivable submission sit PENDING even before the
   // buyer attests - hide those from the bank's queue until attestation has
   // run the auto-reject check, same as decideClaim itself requires.
   const activeReceivableIds = new Set(activeReceivables.map((r) => r.id));
-  const ownClaims = claims.filter(
-    (c) => c.lenderName === user?.institution && activeReceivableIds.has(c.receivableId)
-  );
-
-  const handleDecide = (claimId: string, decision: "APPROVED" | "REJECTED") => {
-    const result = decideClaim(claimId, decision, user?.institution ?? "");
-    if (!result) {
-      toast.error(
-        decision === "APPROVED"
-          ? "No longer enough remaining capacity to approve this request."
-          : "Unable to update this request."
-      );
-      return;
-    }
-    toast.success(
-      decision === "APPROVED" ? `${claimId} approved.` : `${claimId} declined.`
-    );
-  };
+  const ownClaims = claims
+    .filter((c) => c.lenderName === user?.institution && activeReceivableIds.has(c.receivableId))
+    .sort((a, b) => (a.submittedAt < b.submittedAt ? 1 : -1))
+    .slice(0, 5);
 
   return (
     <div className="space-y-8">
@@ -62,12 +49,21 @@ export default function LenderDashboardPage() {
       </div>
 
       <div className="space-y-3">
-        <h2 className="text-sm font-semibold tracking-tight">Financing requests to you</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold tracking-tight">Financing requests to you</h2>
+          <Link
+            href="/lender/requests"
+            className="inline-flex items-center gap-1 text-sm text-finclaim-teal-700 hover:underline"
+          >
+            View all
+            <ArrowRight className="size-3.5" />
+          </Link>
+        </div>
         <ClaimTable
           claims={ownClaims}
           showReceivableId
           showLender={false}
-          onDecide={handleDecide}
+          getHref={(c) => `/lender/requests/${c.id}`}
           emptyMessage="No financing requests have been directed to you yet."
         />
       </div>

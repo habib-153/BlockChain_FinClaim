@@ -24,7 +24,8 @@ export interface AppDataContextValue {
   decideClaim: (
     claimId: string,
     decision: "APPROVED" | "REJECTED",
-    actorName: string
+    actorName: string,
+    approvedAmountBdt?: number
   ) => Claim | null;
   raiseFlag: (input: RaiseFlagInput, actorName: string) => LinkedEntityFlag;
   clearFlag: (flagId: string, documentName: string, actorName: string) => void;

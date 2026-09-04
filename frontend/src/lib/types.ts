@@ -32,6 +32,8 @@ export interface Claim {
   type: ClaimType;
   amountBdt: number;
   status: ClaimStatus;
+  /** Set when a bank approves for less than the amount requested - amountBdt stays the original ask. */
+  approvedAmountBdt?: number;
   rejectionReason?: string;
   submittedAt: string;
   frozen: boolean;

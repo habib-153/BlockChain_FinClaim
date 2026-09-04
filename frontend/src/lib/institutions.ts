@@ -67,7 +67,7 @@ export function buildInstitutionDirectory(
     row.requestsReceived += 1;
     if (c.status === "APPROVED") {
       row.requestsApproved += 1;
-      row.totalApprovedBdt += c.amountBdt;
+      row.totalApprovedBdt += c.approvedAmountBdt ?? c.amountBdt;
     }
   }
   for (const f of flags) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { CheckCircle2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,11 +17,20 @@ import type { Receivable } from "@/lib/types";
 export function AttestationCard({
   receivable,
   onConfirm,
+  href,
 }: {
   receivable: Receivable;
   onConfirm: (receivableId: string) => void;
+  href?: string;
 }) {
+  const router = useRouter();
   const [isConfirming, setIsConfirming] = useState(false);
+
+  const openDetails = () => {
+    if (href) {
+      router.push(href);
+    }
+  };
 
   const handleConfirm = () => {
     setIsConfirming(true);
@@ -31,11 +41,30 @@ export function AttestationCard({
   };
 
   return (
-    <Card>
+    <Card
+      role={href ? "button" : undefined}
+      tabIndex={href ? 0 : undefined}
+      onClick={openDetails}
+      onKeyDown={(event) => {
+        if (
+          href &&
+          event.target === event.currentTarget &&
+          (event.key === "Enter" || event.key === " ")
+        ) {
+          event.preventDefault();
+          openDetails();
+        }
+      }}
+      className={
+        href ? "cursor-pointer transition-colors hover:bg-muted/30" : undefined
+      }
+    >
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>{receivable.id}</span>
-          <span className="text-finclaim-teal-700">{formatBDT(receivable.amountBdt)}</span>
+          <span className="text-finclaim-teal-700">
+            {formatBDT(receivable.amountBdt)}
+          </span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 text-sm">
@@ -45,11 +74,18 @@ export function AttestationCard({
           {receivable.invoiceFileName ?? "Invoice on file"} · encrypted
         </div>
         <div className="text-xs text-muted-foreground">
-          Submitted by {receivable.sellerName} on {formatDate(receivable.submittedAt)}
+          Submitted by {receivable.sellerName} on{" "}
+          {formatDate(receivable.submittedAt)}
         </div>
       </CardContent>
       <CardFooter className="justify-end">
-        <Button onClick={handleConfirm} disabled={isConfirming}>
+        <Button
+          onClick={(event) => {
+            event.stopPropagation();
+            handleConfirm();
+          }}
+          disabled={isConfirming}
+        >
           <CheckCircle2 />
           {isConfirming ? "Confirming…" : "Confirm obligation"}
         </Button>

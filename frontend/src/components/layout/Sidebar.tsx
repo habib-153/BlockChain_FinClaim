@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   FilePlus2,
+  Inbox,
   LayoutDashboard,
   SendHorizonal,
   type LucideIcon,
@@ -25,7 +26,10 @@ const NAV_ITEMS: Record<Role, NavItem[]> = {
     { label: "Request more financing", href: "/seller/financing/new", icon: SendHorizonal },
   ],
   buyer: [{ label: "Dashboard", href: "/buyer", icon: LayoutDashboard }],
-  lender: [{ label: "Dashboard", href: "/lender", icon: LayoutDashboard }],
+  lender: [
+    { label: "Dashboard", href: "/lender", icon: LayoutDashboard },
+    { label: "Financing requests", href: "/lender/requests", icon: Inbox },
+  ],
   regulator: [{ label: "Dashboard", href: "/regulator", icon: LayoutDashboard }],
   admin: [{ label: "Dashboard", href: "/admin", icon: LayoutDashboard }],
 };
@@ -56,7 +60,9 @@ export function Sidebar({ role, onNavigate }: { role: Role; onNavigate?: () => v
           {ROLE_LABELS[role]} workspace
         </div>
         {items.map((item) => {
-          const active = pathname === item.href;
+          const active =
+            pathname === item.href ||
+            (item.href !== `/${role}` && pathname.startsWith(`${item.href}/`));
           const Icon = item.icon;
           return (
             <Link

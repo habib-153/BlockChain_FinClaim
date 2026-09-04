@@ -31,7 +31,7 @@ export default function AdminDashboardPage() {
     () =>
       claims
         .filter((c) => c.status === "APPROVED" && !c.frozen)
-        .reduce((sum, c) => sum + c.amountBdt, 0),
+        .reduce((sum, c) => sum + (c.approvedAmountBdt ?? c.amountBdt), 0),
     [claims]
   );
   const institutions = useMemo(

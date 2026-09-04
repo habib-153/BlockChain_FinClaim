@@ -19,7 +19,7 @@ export function summarizeCapacity(
         c.status === "APPROVED" &&
         !c.frozen
     )
-    .reduce((sum, c) => sum + c.amountBdt, 0);
+    .reduce((sum, c) => sum + (c.approvedAmountBdt ?? c.amountBdt), 0);
 
   const remainingBdt = Math.max(receivable.amountBdt - allocatedBdt, 0);
   const allocatedPct =

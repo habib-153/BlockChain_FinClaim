@@ -1,3 +1,6 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -12,11 +15,15 @@ import type { Receivable } from "@/lib/types";
 
 export function ReceivableTable({
   receivables,
+  getHref,
   emptyMessage = "No receivables to show yet.",
 }: {
   receivables: Receivable[];
+  /** When provided, each row navigates to this URL - used for the receivable-details pages. */
+  getHref?: (receivable: Receivable) => string;
   emptyMessage?: string;
 }) {
+  const router = useRouter();
   if (receivables.length === 0) {
     return (
       <div className="rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground">
@@ -40,23 +47,30 @@ export function ReceivableTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {receivables.map((r) => (
-            <TableRow key={r.id}>
-              <TableCell className="font-medium">{r.id}</TableCell>
-              <TableCell className="text-muted-foreground">{r.sellerName}</TableCell>
-              <TableCell className="text-muted-foreground">{r.buyerName}</TableCell>
-              <TableCell>{formatBDT(r.amountBdt)}</TableCell>
-              <TableCell className="text-muted-foreground">
-                {formatDate(r.submittedAt)}
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {r.attestedAt ? formatDate(r.attestedAt) : "-"}
-              </TableCell>
-              <TableCell>
-                <ReceivableStatusBadge status={r.status} />
-              </TableCell>
-            </TableRow>
-          ))}
+          {receivables.map((r) => {
+            const href = getHref?.(r);
+            return (
+              <TableRow
+                key={r.id}
+                onClick={href ? () => router.push(href) : undefined}
+                className={href ? "cursor-pointer hover:bg-muted/50" : undefined}
+              >
+                <TableCell className="font-medium">{r.id}</TableCell>
+                <TableCell className="text-muted-foreground">{r.sellerName}</TableCell>
+                <TableCell className="text-muted-foreground">{r.buyerName}</TableCell>
+                <TableCell>{formatBDT(r.amountBdt)}</TableCell>
+                <TableCell className="text-muted-foreground">
+                  {formatDate(r.submittedAt)}
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {r.attestedAt ? formatDate(r.attestedAt) : "-"}
+                </TableCell>
+                <TableCell>
+                  <ReceivableStatusBadge status={r.status} />
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

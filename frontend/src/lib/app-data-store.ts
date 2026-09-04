@@ -265,15 +265,22 @@ export function submitClaim(input: SubmitClaimInput): Claim {
 /**
  * The bank's own manual decision on a PENDING financing request - approval
  * is never automatic. Returns null (no-op, nothing persisted) if the claim
- * isn't PENDING, or if approving it would now exceed remaining capacity
- * (capacity is re-checked at decision time, not just at submission time,
- * since other requests may have been approved in the meantime) - the caller
- * should surface that as an error rather than silently rejecting the claim.
+ * isn't PENDING, if `approvedAmountBdt` is out of range (must be positive and
+ * no more than what was actually requested), or if approving it would now
+ * exceed remaining capacity (capacity is re-checked at decision time, not
+ * just at submission time, since other requests may have been approved in
+ * the meantime) - the caller should surface that as an error rather than
+ * silently rejecting the claim.
+ *
+ * `approvedAmountBdt` lets the bank approve for less than the seller asked
+ * for (e.g. seller requests 6,000 of a 10,000 receivable, bank can only
+ * extend 3,000) - defaults to the full requested amount when omitted.
  */
 export function decideClaim(
   claimId: string,
   decision: "APPROVED" | "REJECTED",
-  actorName: string
+  actorName: string,
+  approvedAmountBdt?: number
 ): Claim | null {
   const state = getSnapshot();
   const target = state.claims.find((c) => c.id === claimId);
@@ -281,24 +288,33 @@ export function decideClaim(
   const receivable = state.receivables.find((r) => r.id === target.receivableId);
   if (!receivable) return null;
 
+  const finalAmount = decision === "APPROVED" ? approvedAmountBdt ?? target.amountBdt : undefined;
+
   if (decision === "APPROVED") {
+    if (!finalAmount || finalAmount <= 0 || finalAmount > target.amountBdt) return null;
     const { remainingBdt } = summarizeCapacity(receivable, state.claims);
-    if (target.amountBdt > remainingBdt) return null;
+    if (finalAmount > remainingBdt) return null;
   }
 
   const updated: Claim = {
     ...target,
     status: decision,
+    approvedAmountBdt: decision === "APPROVED" ? finalAmount : undefined,
     rejectionReason: decision === "REJECTED" ? `Declined by ${actorName}.` : undefined,
   };
 
+  const partial = decision === "APPROVED" && finalAmount !== target.amountBdt;
   const event = appendAuditEvent(
     state,
     actorName,
     decision === "APPROVED" ? "Financing request approved" : "Financing request rejected",
-    `${target.type} request ${claimId} for ${target.amountBdt.toLocaleString(
-      "en-US"
-    )} BDT against ${target.receivableId} ${decision === "APPROVED" ? "approved" : "rejected"} by ${actorName}.`
+    decision === "APPROVED"
+      ? `${target.type} request ${claimId} approved by ${actorName} for ${finalAmount!.toLocaleString(
+          "en-US"
+        )} BDT${partial ? ` (of ${target.amountBdt.toLocaleString("en-US")} BDT requested)` : ""} against ${target.receivableId}.`
+      : `${target.type} request ${claimId} for ${target.amountBdt.toLocaleString(
+          "en-US"
+        )} BDT against ${target.receivableId} rejected by ${actorName}.`
   );
 
   persist({
