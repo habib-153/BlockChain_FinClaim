@@ -35,10 +35,13 @@ export function SubmitReceivableForm() {
 
   const [targetLenderName, setTargetLenderName] = useState(LENDER_INSTITUTIONS[0] ?? "");
   const [claimType, setClaimType] = useState<ClaimType>("Pledge");
-  // Empty until the seller overrides it - defaults to (and tracks) the
-  // invoice amount above, without syncing via an effect.
+  // Untouched until the seller edits it - defaults to (and tracks) the
+  // invoice amount above, without syncing via an effect. Tracked separately
+  // from the override string itself so clearing the field to "" (e.g. via
+  // backspace) doesn't fall back to the invoice amount.
   const [requestedAmountOverride, setRequestedAmountOverride] = useState("");
-  const requestedAmount = requestedAmountOverride || amount;
+  const [requestedAmountTouched, setRequestedAmountTouched] = useState(false);
+  const requestedAmount = requestedAmountTouched ? requestedAmountOverride : amount;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
@@ -194,7 +197,10 @@ export function SubmitReceivableForm() {
                 min={1}
                 step={1}
                 value={requestedAmount}
-                onChange={(e) => setRequestedAmountOverride(e.target.value)}
+                onChange={(e) => {
+                  setRequestedAmountTouched(true);
+                  setRequestedAmountOverride(e.target.value);
+                }}
                 placeholder="650000"
                 required
               />
